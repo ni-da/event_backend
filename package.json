@@ -1,0 +1,16 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "A nodejs project for backend.",
+  "main": "app.js",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "json2csv": "^5.0.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Nida Ilyas",
+  "license": "ISC"
+}
