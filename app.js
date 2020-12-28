@@ -67,9 +67,6 @@ var submittedForms = [];
 
 var counter = 0;
 
-
-cancel = axios.CancelToken.source();
-
 async function getFormById(formId) {
     var getByIdConfig = {
         method: 'get',
@@ -114,9 +111,9 @@ async function submitForms(postConfig, submitData) {
     }
 }
 
-submitForms(postConfig, submitData).then(() => {
-    createFormsCsv(getConfig, 'test000');
-});
+// submitForms(postConfig, submitData).then(() => {
+createFormsCsv(getConfig, 'test000');
+// });
 
 function convertToCsv(jsonData) {
     const fields = [{
