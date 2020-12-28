@@ -8,25 +8,30 @@ password = 'Boldtesting2000';
 baseUrl = 'https://secure.p03.eloqua.com';
 encodedStr = Buffer.from(siteName + '\\' + username + ':' + password).toString('base64');
 
+
+var responses = [];
+var submittedForms = [];
+var counter = 0;
+
 var submitData = {
     "data": [{
-            "name": "New Email Form for auto testing1",
+            "name": "Event marketing test: Mercury",
             "processingType": "externalEmail",
         },
         {
-            "name": "New Email Form for auto testing2",
+            "name": "Event marketing test: Venus",
             "processingType": "externalEmail",
         },
         {
-            "name": "New Email Form for auto testing3",
+            "name": "Event marketing test: Mars",
             "processingType": "externalEmail",
         },
         {
-            "name": "New Email Form for auto testing4",
+            "name": "Event marketing test: Saturn",
             "processingType": "externalEmail",
         },
         {
-            "name": "New Email Form for auto testing5",
+            "name": "Event marketing test: Uranus",
             "processingType": "externalEmail",
         },
     ]
@@ -41,7 +46,6 @@ var postConfig = {
     },
 };
 
-
 var getConfig = {
     method: 'get',
     url: baseUrl + '/api/REST/1.0/assets/forms',
@@ -51,21 +55,19 @@ var getConfig = {
     }
 };
 
-function createFormsCsv(getConfig, fileName) {
-    axios(getConfig)
-        .then(function(response) {
-            writeCsvFile(fileName, convertToCsv(response.data.elements));
-        })
-        .catch(function(error) {
-            console.log(error);
-        });
+async function submitForms(postConfig, submitData) {
+    for (const item of submitData['data']) {
+        postConfig.data = item;
+        await axios(postConfig)
+            .then(function(response) {
+                submittedForms.push(JSON.stringify(response.data.id));
+                console.log('Sumbitted', response.data.id);
+            })
+            .catch(function(error) {
+                return console.log(error);
+            });
+    }
 }
-
-
-var responses = [];
-var submittedForms = [];
-
-var counter = 0;
 
 async function getFormById(formId) {
     var getByIdConfig = {
@@ -86,6 +88,7 @@ async function getFormById(formId) {
             console.log(error);
         });
 }
+
 async function getForms() {
     submittedForms.forEach(async formId => {
         await getFormById(formId).then(() => {
@@ -97,23 +100,19 @@ async function getForms() {
     });
 }
 
-async function submitForms(postConfig, submitData) {
-    for (const item of submitData['data']) {
-        postConfig.data = item;
-        await axios(postConfig)
-            .then(function(response) {
-                submittedForms.push(JSON.stringify(response.data.id));
-                console.log('Sumbitted', response.data.id);
-            })
-            .catch(function(error) {
-                return console.log(error);
-            });
-    }
+function createFormsCsv(getConfig, fileName) {
+    axios(getConfig)
+        .then(function(response) {
+            writeCsvFile(fileName, convertToCsv(response.data.elements));
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
 }
 
-// submitForms(postConfig, submitData).then(() => {
-createFormsCsv(getConfig, 'test000');
-// });
+submitForms(postConfig, submitData).then(() => {
+    createFormsCsv(getConfig, 'test000');
+});
 
 function convertToCsv(jsonData) {
     const fields = [{
