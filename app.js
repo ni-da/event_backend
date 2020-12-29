@@ -8,34 +8,29 @@ password = 'Boldtesting2000';
 baseUrl = 'https://secure.p03.eloqua.com';
 encodedStr = Buffer.from(siteName + '\\' + username + ':' + password).toString('base64');
 
-
 var responses = [];
-var submittedForms = [];
-var counter = 0;
 
-var submitData = {
-    "data": [{
-            "name": "Event marketing test: Mercury",
-            "processingType": "externalEmail",
-        },
-        {
-            "name": "Event marketing test: Venus",
-            "processingType": "externalEmail",
-        },
-        {
-            "name": "Event marketing test: Mars",
-            "processingType": "externalEmail",
-        },
-        {
-            "name": "Event marketing test: Saturn",
-            "processingType": "externalEmail",
-        },
-        {
-            "name": "Event marketing test: Uranus",
-            "processingType": "externalEmail",
-        },
-    ]
-};
+var submitData = [{
+        "name": "Event marketing test: Mercury",
+        "processingType": "externalEmail",
+    },
+    {
+        "name": "Event marketing test: Venus",
+        "processingType": "externalEmail",
+    },
+    {
+        "name": "Event marketing test: Mars",
+        "processingType": "externalEmail",
+    },
+    {
+        "name": "Event marketing test: Saturn",
+        "processingType": "externalEmail",
+    },
+    {
+        "name": "Event marketing test: Uranus",
+        "processingType": "externalEmail",
+    },
+];
 
 var postConfig = {
     method: 'post',
@@ -46,22 +41,28 @@ var postConfig = {
     },
 };
 
-var getConfig = {
-    method: 'get',
-    url: baseUrl + '/api/REST/1.0/assets/forms',
-    headers: {
-        'Authorization': 'Basic ' + encodedStr,
-        'responseType': 'blob'
-    }
-};
-
-async function submitForms(postConfig, submitData) {
-    for (const item of submitData['data']) {
-        postConfig.data = item;
+async function submitAndGetForms(postConfig, submitData) {
+    for (const element of submitData) {
+        postConfig.data = element;
         await axios(postConfig)
-            .then(function(response) {
-                submittedForms.push(JSON.stringify(response.data.id));
-                console.log('Sumbitted', response.data.id);
+            .then(async function(post_response) {
+                //get form by id
+                var getByIdConfig = {
+                    method: 'get',
+                    url: baseUrl + '/api/REST/1.0/assets/form/' + post_response.data.id,
+                    headers: {
+                        'Authorization': 'Basic ' + encodedStr,
+                        'responseType': 'blob'
+                    },
+                };
+                await axios(getByIdConfig)
+                    .then(function(get_response) {
+                        response = get_response.data;
+                        responses.push(response);
+                    })
+                    .catch(function(error) {
+                        console.log(error);
+                    });
             })
             .catch(function(error) {
                 return console.log(error);
@@ -69,50 +70,13 @@ async function submitForms(postConfig, submitData) {
     }
 }
 
-async function getFormById(formId) {
-    var getByIdConfig = {
-        method: 'get',
-        url: baseUrl + '/api/REST/1.0/assets/form/' + formId,
-        headers: {
-            'Authorization': 'Basic ' + encodedStr,
-            'responseType': 'blob'
-        },
-    };
-    await axios(getByIdConfig)
-        .then(function(response) {
-            response = response.data;
-            responses.push(response);
-            console.log("getting form");
-        })
-        .catch(function(error) {
-            console.log(error);
-        });
-}
-
-async function getForms() {
-    submittedForms.forEach(async formId => {
-        await getFormById(formId).then(() => {
-            if (counter == submittedForms.length - 1) {
-                appendCsvFile('message', convertToCsv(responses));
-            }
-            counter++;
-        })
+async function startApp() {
+    await submitAndGetForms(postConfig, submitData).then(() => {
+        appendCsvFile('data000', convertToCsv(responses));
     });
 }
 
-function createFormsCsv(getConfig, fileName) {
-    axios(getConfig)
-        .then(function(response) {
-            writeCsvFile(fileName, convertToCsv(response.data.elements));
-        })
-        .catch(function(error) {
-            console.log(error);
-        });
-}
-
-submitForms(postConfig, submitData).then(() => {
-    createFormsCsv(getConfig, 'test000');
-});
+startApp(postConfig, submitData);
 
 function convertToCsv(jsonData) {
     const fields = [{
@@ -169,13 +133,6 @@ function convertToCsv(jsonData) {
     ];
     const json2csvParser = new Parser({ fields });
     return json2csvParser.parse(jsonData);
-}
-
-function writeCsvFile(fileName, data) {
-    fs.writeFile(fileName + '.csv', data, function(err) {
-        if (err) return console.log(err);
-    });
-    return console.log('File created: ' + fileName + '.csv');
 }
 
 function appendCsvFile(fileName, data) {
